@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Brain Training Project</title>
+    <title>Tägliches Gehirntraining-Projekt</title>
     <script src="lang-detector.js"></script>
     <script src="common.js"></script>
     <style>
@@ -16,7 +16,6 @@
             padding-bottom: 60px;
         }
 
-        /* Header Area */
         header {
             background: linear-gradient(135deg, #42a5f5, #1976d2);
             color: white;
@@ -25,27 +24,12 @@
             border-bottom-right-radius: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             text-align: center;
+            position: relative;
         }
         h1 { margin: 0; font-size: 24px; }
         .user-greeting { font-size: 16px; margin-top: 5px; font-weight: bold; }
         .date-display { font-size: 12px; margin-top: 2px; opacity: 0.8; }
-        .lang-menu {
-            position: absolute; top: 10px; right: 10px;
-        }
-        .lang-switch { 
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.5);
-            color: white;
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            text-decoration: none;
-            margin-left: 5px;
-        }
-        header { position: relative; }
 
-        /* Name Change Button */
         #change-name-btn {
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.5);
@@ -57,7 +41,6 @@
             margin-top: 5px;
         }
 
-        /* Status Card */
         .status-card {
             background-color: white;
             width: 90%;
@@ -72,9 +55,8 @@
         .status-title { font-size: 16px; font-weight: bold; color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
         .status-message { font-size: 18px; font-weight: bold; color: #d32f2f; text-align: center; margin-bottom: 20px; }
 
-        /* Parameter Bars */
         .param-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; }
-        .param-label { width: 90px; font-weight: bold; }
+        .param-label { width: 100px; font-weight: bold; }
         .bar-bg { flex: 1; height: 12px; background-color: #eee; border-radius: 6px; overflow: hidden; }
         .bar-fill { height: 100%; border-radius: 6px; width: 0%; transition: width 1s; }
         
@@ -83,7 +65,6 @@
         .color-brain { background-color: #66bb6a; }
         .color-obs { background-color: #ab47bc; }
 
-        /* Game List */
         .game-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -105,6 +86,7 @@
             align-items: center;
             border: 2px solid transparent;
             transition: transform 0.2s;
+            position: relative;
         }
         .game-card:active { transform: scale(0.98); background-color: #fafafa; }
 
@@ -129,7 +111,21 @@
             position: absolute; top: 10px; left: 10px;
             font-size: 12px; color: #ccc; font-weight: bold;
         }
-        .game-card { position: relative; }
+        
+        .lang-menu {
+            position: absolute; top: 10px; right: 10px;
+        }
+        .lang-switch { 
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            color: white;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -138,76 +134,75 @@
         <div class="lang-menu">
             <a href="index.html?lang=ja" class="lang-switch">🇯🇵</a>
             <a href="index-en.html?lang=en" class="lang-switch">🇺🇸</a>
-            <a href="index-zh.html?lang=zh" class="lang-switch">🇨🇳</a>
+            <a href="index-de.html?lang=de" class="lang-switch">🇩🇪</a>
         </div>
-        <h1>🧠 Brain Health Check</h1>
-        <div class="user-greeting">Welcome, <span id="header-name">Guest</span>!</div>
-        <div class="date-display" id="today-date">YYYY/MM/DD</div>
-        <button id="change-name-btn" onclick="askName(true)">Change Name</button>
+        <h1>🧠 Gehirn-Gesundheitscheck</h1>
+        <div class="user-greeting">Willkommen, <span id="header-name">Gast</span></div>
+        <div class="date-display" id="today-date">DD.MM.YYYY</div>
+        <button id="change-name-btn" onclick="askName(true)">Namen ändern</button>
     </header>
 
     <div class="status-card">
-        <div class="status-title">Your Status Today</div>
-        <div class="status-message" id="daily-msg">Collecting data...</div>
+        <div class="status-title">Ihr heutiger Zustand</div>
+        <div class="status-message" id="daily-msg">Daten werden gesammelt...</div>
         
         <div class="param-row">
-            <div class="param-label">Reflexes</div>
+            <div class="param-label">Reflexe</div>
             <div class="bar-bg"><div class="bar-fill color-reflex" id="bar-reflex"></div></div>
         </div>
         <div class="param-row">
-            <div class="param-label">Memory</div>
+            <div class="param-label">Gedächtnis</div>
             <div class="bar-bg"><div class="bar-fill color-memory" id="bar-memory"></div></div>
         </div>
         <div class="param-row">
-            <div class="param-label">Thinking</div>
+            <div class="param-label">Denken</div>
             <div class="bar-bg"><div class="bar-fill color-brain" id="bar-brain"></div></div>
         </div>
         <div class="param-row">
-            <div class="param-label">Observation</div>
+            <div class="param-label">Beobachtung</div>
             <div class="bar-bg"><div class="bar-fill color-obs" id="bar-obs"></div></div>
         </div>
     </div>
 
-    <h3 style="padding-left: 20px; margin-bottom: 10px; color: #555;">Choose Your Training</h3>
+    <h3 style="padding-left: 20px; margin-bottom: 10px; color: #555;">Wählen Sie Ihr Training</h3>
     
     <div class="game-grid">
         <a href="1.html" class="game-card">
-            <div class="game-no">01</div><div class="icon">🐹</div><div class="title">Whack-a-Mole</div>
-            <div class="badge color-reflex">Reflexes</div><div class="best-score">Best: <span id="score-1">-</span></div>
+            <div class="game-no">01</div><div class="icon">🐹</div><div class="title">Maulwurf-Jagd</div>
+            <div class="badge color-reflex">Reflexe</div><div class="best-score">Beste: <span id="score-1">-</span></div>
         </a>
         <a href="2.html" class="game-card">
-            <div class="game-no">02</div><div class="icon">🍎</div><div class="title">Memory Match</div>
-            <div class="badge color-memory">Memory</div><div class="best-score">Best: <span id="score-2">-</span></div> 
+            <div class="game-no">02</div><div class="icon">🍎</div><div class="title">Memory-Spiel</div>
+            <div class="badge color-memory">Gedächtnis</div><div class="best-score">Beste: <span id="score-2">-</span></div> 
         </a>
         <a href="3.html" class="game-card">
-            <div class="game-no">03</div><div class="icon">🔢</div><div class="title">Number Touch</div>
-            <div class="badge color-reflex">Reflexes</div><div class="best-score">Best: <span id="score-3">-</span></div>
+            <div class="game-no">03</div><div class="icon">🔢</div><div class="title">Zahlen berühren</div>
+            <div class="badge color-reflex">Reflexe</div><div class="best-score">Beste: <span id="score-3">-</span></div>
         </a>
         <a href="4.html" class="game-card">
-            <div class="game-no">04</div><div class="icon">🧮</div><div class="title">Math Drill</div>
-            <div class="badge color-brain">Thinking</div><div class="best-score">Best: <span id="score-4">-</span></div>
+            <div class="game-no">04</div><div class="icon">🧮</div><div class="title">Mathe-Übungen</div>
+            <div class="badge color-brain">Denken</div><div class="best-score">Beste: <span id="score-4">-</span></div>
         </a>
         <a href="5.html" class="game-card">
-            <div class="game-no">05</div><div class="icon">🌈</div><div class="title">Color Sort</div>
-            <div class="badge color-brain">Thinking</div><div class="best-score">Best: <span id="score-5">-</span></div>
+            <div class="game-no">05</div><div class="icon">🌈</div><div class="title">Farben sortieren</div>
+            <div class="badge color-brain">Denken</div><div class="best-score">Beste: <span id="score-5">-</span></div>
         </a>
         <a href="6.html" class="game-card">
-            <div class="game-no">06</div><div class="icon">💡</div><div class="title">Light Sequence</div>
-            <div class="badge color-memory">Memory</div><div class="best-score">Best: <span id="score-6">-</span></div>
+            <div class="game-no">06</div><div class="icon">💡</div><div class="title">Licht-Sequenz</div>
+            <div class="badge color-memory">Gedächtnis</div><div class="best-score">Beste: <span id="score-6">-</span></div>
         </a>
         <a href="7.html" class="game-card">
-            <div class="game-no">07</div><div class="icon">👀</div><div class="title">Odd One Out</div>
-            <div class="badge color-obs">Observation</div><div class="best-score">Best: <span id="score-7">-</span></div>
+            <div class="game-no">07</div><div class="icon">👀</div><div class="title">Finde den Unterschied</div>
+            <div class="badge color-obs">Beobachtung</div><div class="best-score">Beste: <span id="score-7">-</span></div>
         </a>
     </div>
 
     <script>
-        // Ask for name
         function askName(force = false) {
             let currentName = localStorage.getItem('user_name');
             
             if (!currentName || force) {
-                let inputName = prompt("Please enter your name", currentName || "");
+                let inputName = prompt("Bitte geben Sie Ihren Namen ein", currentName || "");
                 if (inputName && inputName.trim() !== "") {
                     localStorage.setItem('user_name', inputName);
                     document.getElementById('header-name').textContent = inputName;
@@ -220,12 +215,10 @@
         window.onload = function() {
             askName();
 
-            // Date display
             const today = new Date();
-            const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const dateStr = today.toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('today-date').textContent = dateStr;
 
-            // Load best scores
             function getBest(key) {
                 const saved = localStorage.getItem(key);
                 if (!saved) return null;
@@ -242,15 +235,14 @@
             const s6 = getBest('light_memory_ranking_v1');
             const s7 = getBest('odd_one_ranking_v1');
 
-            if(s1) document.getElementById('score-1').textContent = s1 + " pts";
-            if(s2) document.getElementById('score-2').textContent = s2 + " moves";
+            if(s1) document.getElementById('score-1').textContent = s1 + " Pkt";
+            if(s2) document.getElementById('score-2').textContent = s2 + " Züge";
             if(s3) document.getElementById('score-3').textContent = s3.toFixed(1) + "s";
-            if(s4) document.getElementById('score-4').textContent = s4 + " correct";
+            if(s4) document.getElementById('score-4').textContent = s4 + " richtig";
             if(s5) document.getElementById('score-5').textContent = s5.toFixed(1) + "s";
-            if(s6) document.getElementById('score-6').textContent = "Lv." + s6;
-            if(s7) document.getElementById('score-7').textContent = s7 + " found";
+            if(s6) document.getElementById('score-6').textContent = "Stufe " + s6;
+            if(s7) document.getElementById('score-7').textContent = s7 + " gefunden";
 
-            // Calculate parameters
             let p_reflex = 0;
             if(s1) p_reflex += (s1 / 30) * 50; 
             if(s3) p_reflex += (Math.max(0, 30 - s3) / 20) * 50;
@@ -281,19 +273,19 @@
             const totalPower = p_reflex + p_memory + p_brain + p_obs;
 
             if (totalPower === 0) {
-                msgEl.textContent = "Let's start your training today!";
+                msgEl.textContent = "Lassen Sie uns Ihr heutiges Training beginnen!";
             } else {
                 const stats = [
-                    { name: "Reflexes", val: p_reflex },
-                    { name: "Memory", val: p_memory },
-                    { name: "Thinking", val: p_brain },
-                    { name: "Observation", val: p_obs }
+                    { name: "Reflexe", val: p_reflex },
+                    { name: "Gedächtnis", val: p_memory },
+                    { name: "Denken", val: p_brain },
+                    { name: "Beobachtung", val: p_obs }
                 ];
                 stats.sort((a, b) => b.val - a.val); 
                 const best = stats[0];
-                if (best.val > 80) msgEl.textContent = `Amazing! Your "${best.name}" is getting younger!`;
-                else if (best.val > 40) msgEl.textContent = `Good progress! Your "${best.name}" is doing well.`;
-                else msgEl.textContent = `Let's work on improving your "${best.name}".`;
+                if (best.val > 80) msgEl.textContent = `Erstaunlich! Ihre "${best.name}" verjüngen sich!`;
+                else if (best.val > 40) msgEl.textContent = `Guter Fortschritt! Ihre "${best.name}" sind in guter Form.`;
+                else msgEl.textContent = `Lassen Sie uns Ihre "${best.name}" verbessern.`;
             }
         };
     </script>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>毎日脳トレ・プロジェクト</title>
+    <script src="lang-detector.js"></script>
     <script src="common.js"></script>
     <style>
         body {
@@ -115,8 +116,10 @@
         }
         .game-card { position: relative; }
         
-        .lang-switch { 
+        .lang-menu {
             position: absolute; top: 10px; right: 10px;
+        }
+        .lang-switch { 
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.5);
             color: white;
@@ -125,6 +128,7 @@
             border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
+            margin-left: 5px;
         }
         header { position: relative; }
     </style>
@@ -132,7 +136,11 @@
 <body>
 
     <header>
-        <a href="index-en.html" class="lang-switch">🇺🇸 English</a>
+        <div class="lang-menu">
+            <a href="index.html?lang=ja" class="lang-switch">🇯🇵</a>
+            <a href="index-en.html?lang=en" class="lang-switch">🇺🇸</a>
+            <a href="index-zh.html?lang=zh" class="lang-switch">🇨🇳</a>
+        </div>
         <h1>🧠 脳の健康診断</h1>
         <div class="user-greeting">ようこそ、<span id="header-name">ゲスト</span>さん</div>
         <div class="date-display" id="today-date">202X年X月X日</div>
@@ -195,21 +203,6 @@
     </div>
 
     <script>
-        // ★ブラウザの言語を検出して自動リダイレクト
-        (function() {
-            // URLパラメータで言語が指定されている場合はリダイレクトしない
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('lang')) return;
-            
-            // ブラウザの言語設定を取得
-            const userLang = navigator.language || navigator.userLanguage;
-            
-            // 日本語以外の場合、英語版にリダイレクト
-            if (!userLang.startsWith('ja')) {
-                window.location.href = 'index-en.html?lang=en';
-            }
-        })();
-
         // ★名前を聞く関数
         function askName(force = false) {
             let currentName = localStorage.getItem('user_name');
