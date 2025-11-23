@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>毎日脳トレ・プロジェクト</title>
-    <script src="common.js"></script>
     <style>
         body {
             font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
@@ -26,27 +25,14 @@
             text-align: center;
         }
         h1 { margin: 0; font-size: 24px; }
-        .user-greeting { font-size: 16px; margin-top: 5px; font-weight: bold; }
-        .date-display { font-size: 12px; margin-top: 2px; opacity: 0.8; }
-
-        /* 名前の変更ボタン（小さく） */
-        #change-name-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.5);
-            color: white;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 5px;
-        }
+        .date-display { font-size: 14px; margin-top: 5px; opacity: 0.9; }
 
         /* 今日の状態（ステータス）エリア */
         .status-card {
             background-color: white;
             width: 90%;
             max-width: 500px;
-            margin: -20px auto 20px auto;
+            margin: -20px auto 20px auto; /* ヘッダーに少し重ねる */
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -95,6 +81,7 @@
         .icon { font-size: 36px; margin-bottom: 5px; }
         .title { font-size: 15px; font-weight: bold; }
         
+        /* カード内のスコア表示 */
         .best-score {
             margin-top: 8px;
             font-size: 12px;
@@ -105,38 +92,17 @@
         }
         .best-score span { font-weight: bold; color: #e65100; }
 
+        /* カテゴリバッジ */
         .badge {
             font-size: 10px; color: white; padding: 2px 6px; border-radius: 4px; margin-top: 5px;
         }
-        
-        .game-no {
-            position: absolute; top: 10px; left: 10px;
-            font-size: 12px; color: #ccc; font-weight: bold;
-        }
-        .game-card { position: relative; }
-        
-        .lang-switch { 
-            position: absolute; top: 10px; right: 10px;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.5);
-            color: white;
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        header { position: relative; }
     </style>
 </head>
 <body>
 
     <header>
-        <a href="index-en.html" class="lang-switch">🇺🇸 English</a>
         <h1>🧠 脳の健康診断</h1>
-        <div class="user-greeting">ようこそ、<span id="header-name">ゲスト</span>さん</div>
         <div class="date-display" id="today-date">202X年X月X日</div>
-        <button id="change-name-btn" onclick="askName(true)">名前を変更する</button>
     </header>
 
     <div class="status-card">
@@ -165,122 +131,117 @@
     
     <div class="game-grid">
         <a href="1.html" class="game-card">
-            <div class="game-no">01</div><div class="icon">🐹</div><div class="title">もぐら叩き</div>
-            <div class="badge color-reflex">反射神経</div><div class="best-score">最高: <span id="score-1">-</span></div>
+            <div class="icon">🐹</div>
+            <div class="title">もぐら叩き</div>
+            <div class="badge color-reflex">反射神経</div>
+            <div class="best-score">最高: <span id="score-mogura">-</span></div>
         </a>
-        <a href="2.html" class="game-card">
-            <div class="game-no">02</div><div class="icon">🍎</div><div class="title">絵合わせ</div>
-            <div class="badge color-memory">記憶力</div><div class="best-score">最高: <span id="score-2">-</span></div> 
-        </a>
+
         <a href="3.html" class="game-card">
-            <div class="game-no">03</div><div class="icon">🔢</div><div class="title">数字タッチ</div>
-            <div class="badge color-reflex">反射神経</div><div class="best-score">最高: <span id="score-3">-</span></div>
+            <div class="icon">🔢</div>
+            <div class="title">数字タッチ</div>
+            <div class="badge color-reflex">反射神経</div>
+            <div class="best-score">最高: <span id="score-numbers">-</span></div>
         </a>
-        <a href="4.html" class="game-card">
-            <div class="game-no">04</div><div class="icon">🧮</div><div class="title">計算ドリル</div>
-            <div class="badge color-brain">思考力</div><div class="best-score">最高: <span id="score-4">-</span></div>
+
+        <a href="2.html" class="game-card">
+            <div class="icon">🍎</div>
+            <div class="title">絵合わせ</div>
+            <div class="badge color-memory">記憶力</div>
+            <div class="best-score">最高: <span id="score-memory">プレイなし</span></div>
         </a>
-        <a href="5.html" class="game-card">
-            <div class="game-no">05</div><div class="icon">🌈</div><div class="title">色並べパズル</div>
-            <div class="badge color-brain">思考力</div><div class="best-score">最高: <span id="score-5">-</span></div>
-        </a>
+
         <a href="6.html" class="game-card">
-            <div class="game-no">06</div><div class="icon">💡</div><div class="title">光の順番</div>
-            <div class="badge color-memory">記憶力</div><div class="best-score">最高: <span id="score-6">-</span></div>
+            <div class="icon">💡</div>
+            <div class="title">光の順番</div>
+            <div class="badge color-memory">記憶力</div>
+            <div class="best-score">最高: <span id="score-light">-</span></div>
         </a>
+
+        <a href="4.html" class="game-card">
+            <div class="icon">🧮</div>
+            <div class="title">計算ドリル</div>
+            <div class="badge color-brain">思考力</div>
+            <div class="best-score">最高: <span id="score-calc">-</span></div>
+        </a>
+
+        <a href="5.html" class="game-card">
+            <div class="icon">🌈</div>
+            <div class="title">色並べ</div>
+            <div class="badge color-brain">思考力</div>
+            <div class="best-score">最高: <span id="score-puzzle">-</span></div>
+        </a>
+
         <a href="7.html" class="game-card">
-            <div class="game-no">07</div><div class="icon">👀</div><div class="title">仲間はずれ</div>
-            <div class="badge color-obs">観察力</div><div class="best-score">最高: <span id="score-7">-</span></div>
+            <div class="icon">👀</div>
+            <div class="title">仲間はずれ</div>
+            <div class="badge color-obs">観察力</div>
+            <div class="best-score">最高: <span id="score-odd">-</span></div>
         </a>
     </div>
 
     <script>
-        // ★ブラウザの言語を検出して自動リダイレクト
-        (function() {
-            // URLパラメータで言語が指定されている場合はリダイレクトしない
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('lang')) return;
-            
-            // ブラウザの言語設定を取得
-            const userLang = navigator.language || navigator.userLanguage;
-            
-            // 日本語以外の場合、英語版にリダイレクト
-            if (!userLang.startsWith('ja')) {
-                window.location.href = 'index-en.html?lang=en';
-            }
-        })();
-
-        // ★名前を聞く関数
-        function askName(force = false) {
-            let currentName = localStorage.getItem('user_name');
-            
-            // 名前がまだない、または「強制変更(force)」の場合
-            if (!currentName || force) {
-                let inputName = prompt("あなたのお名前を教えてください", currentName || "");
-                if (inputName && inputName.trim() !== "") {
-                    localStorage.setItem('user_name', inputName);
-                    document.getElementById('header-name').textContent = inputName;
-                }
-            } else {
-                // すでに名前があるならそれを表示
-                document.getElementById('header-name').textContent = currentName;
-            }
-        }
-
         window.onload = function() {
-            // ★起動時に名前チェック
-            askName();
-
             // 日付表示
             const today = new Date();
             const dateStr = today.getFullYear() + "年" + (today.getMonth()+1) + "月" + today.getDate() + "日";
             document.getElementById('today-date').textContent = dateStr;
 
             // --- データの読み込み関数 ---
-            function getBest(key) {
+            function getBest(key, isTime = false, isAsc = false) {
                 const saved = localStorage.getItem(key);
                 if (!saved) return null;
                 const scores = JSON.parse(saved);
                 if (scores.length === 0) return null;
+                // isAsc(昇順)なら小さいほうがベスト、そうでなければ大きいほうがベスト
                 return scores[0]; 
             }
 
-            const s1 = getBest('mogura_ranking_v2');
-            const s2 = getBest('memory_ranking_v1');
-            const s3 = getBest('numbers_ranking_v1');
-            const s4 = getBest('calc_ranking_v1');
-            const s5 = getBest('puzzle_ranking_v1');
-            const s6 = getBest('light_memory_ranking_v1');
-            const s7 = getBest('odd_one_ranking_v1');
+            // 各ゲームのデータを取得
+            const s_mogura = getBest('mogura_ranking_v2'); // 点数(大が良い)
+            const s_numbers = getBest('numbers_ranking_v1'); // タイム(小が良い)
+            const s_light = getBest('light_memory_ranking_v1'); // レベル(大が良い)
+            const s_calc = getBest('calc_ranking_v1'); // 点数(大が良い)
+            const s_puzzle = getBest('puzzle_ranking_v1'); // タイム(小が良い)
+            const s_odd = getBest('odd_one_ranking_v1'); // 点数(大が良い)
 
-            if(s1) document.getElementById('score-1').textContent = s1 + "点";
-            if(s2) document.getElementById('score-2').textContent = s2 + "手";
-            if(s3) document.getElementById('score-3').textContent = s3.toFixed(1) + "秒";
-            if(s4) document.getElementById('score-4').textContent = s4 + "問";
-            if(s5) document.getElementById('score-5').textContent = s5.toFixed(1) + "秒";
-            if(s6) document.getElementById('score-6').textContent = "Lv." + s6;
-            if(s7) document.getElementById('score-7').textContent = s7 + "個";
+            // --- 画面への表示 ---
+            if(s_mogura) document.getElementById('score-mogura').textContent = s_mogura + "点";
+            if(s_numbers) document.getElementById('score-numbers').textContent = s_numbers.toFixed(1) + "秒";
+            // memoryは手数管理が複雑なため今回は除外
+            if(s_light) document.getElementById('score-light').textContent = "Lv." + s_light;
+            if(s_calc) document.getElementById('score-calc').textContent = s_calc + "問";
+            if(s_puzzle) document.getElementById('score-puzzle').textContent = s_puzzle.toFixed(1) + "秒";
+            if(s_odd) document.getElementById('score-odd').textContent = s_odd + "個";
 
-            // パラメータ計算
+
+            // --- パラメータ計算とグラフ表示（簡易ロジック） ---
+            
+            // 1. 反射神経 (もぐら + 数字)
+            // もぐらは30点満点、数字は10秒切ればすごいと仮定して計算
             let p_reflex = 0;
-            if(s1) p_reflex += (s1 / 30) * 50; 
-            if(s3) p_reflex += (Math.max(0, 30 - s3) / 20) * 50;
+            if(s_mogura) p_reflex += (s_mogura / 30) * 50; 
+            if(s_numbers) p_reflex += (Math.max(0, 30 - s_numbers) / 20) * 50;
             if(p_reflex > 100) p_reflex = 100;
 
+            // 2. 記憶力 (光)
+            // レベル10いけばすごい
             let p_memory = 0;
-            if(s2) p_memory += (Math.max(0, 40 - s2) / 24) * 50;
-            if(s6) p_memory += (s6 / 10) * 50;
+            if(s_light) p_memory += (s_light / 10) * 100;
             if(p_memory > 100) p_memory = 100;
 
+            // 3. 思考力 (計算 + パズル)
             let p_brain = 0;
-            if(s4) p_brain += (s4 / 15) * 50; 
-            if(s5) p_brain += (Math.max(0, 60 - s5) / 30) * 50;
+            if(s_calc) p_brain += (s_calc / 15) * 50; // 15問正解ですごい
+            if(s_puzzle) p_brain += (Math.max(0, 40 - s_puzzle) / 30) * 50;
             if(p_brain > 100) p_brain = 100;
 
+            // 4. 観察力 (仲間はずれ)
             let p_obs = 0;
-            if(s7) p_obs += (s7 / 20) * 100;
+            if(s_odd) p_obs += (s_odd / 20) * 100; // 20個ですごい
             if(p_obs > 100) p_obs = 100;
 
+            // グラフのアニメーション
             setTimeout(() => {
                 document.getElementById('bar-reflex').style.width = Math.max(5, p_reflex) + "%";
                 document.getElementById('bar-memory').style.width = Math.max(5, p_memory) + "%";
@@ -288,23 +249,37 @@
                 document.getElementById('bar-obs').style.width = Math.max(5, p_obs) + "%";
             }, 500);
 
+            // --- 今日のメッセージ作成 ---
             const msgEl = document.getElementById('daily-msg');
             const totalPower = p_reflex + p_memory + p_brain + p_obs;
 
             if (totalPower === 0) {
                 msgEl.textContent = "さあ、今日のトレーニングを始めましょう！";
             } else {
+                // 一番高い能力を見つける
                 const stats = [
                     { name: "反射神経", val: p_reflex },
                     { name: "記憶力", val: p_memory },
                     { name: "思考力", val: p_brain },
                     { name: "観察力", val: p_obs }
                 ];
-                stats.sort((a, b) => b.val - a.val); 
+                stats.sort((a, b) => b.val - a.val); // 高い順
+                
                 const best = stats[0];
-                if (best.val > 80) msgEl.textContent = `すごい！「${best.name}」が若返っています！`;
-                else if (best.val > 40) msgEl.textContent = `順調です。「${best.name}」が良い調子です。`;
-                else msgEl.textContent = `まずは「${best.name}」を伸ばしていきましょう。`;
+                const worst = stats[3];
+
+                if (best.val > 80) {
+                    msgEl.textContent = `すごい！「${best.name}」が若返っています！`;
+                } else if (best.val > 40) {
+                    msgEl.textContent = `順調です。「${best.name}」が良い調子です。`;
+                } else {
+                    msgEl.textContent = `まずは「${best.name}」を伸ばしていきましょう。`;
+                }
+
+                // ランダムで「弱点」へのアドバイスも混ぜる
+                if (Math.random() > 0.7 && worst.val < 30) {
+                    msgEl.textContent = `今日は「${worst.name}」を重点的に鍛えませんか？`;
+                }
             }
         };
     </script>
