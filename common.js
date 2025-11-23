@@ -37,3 +37,28 @@ function sendData(gameName, score) {
         console.error("送信エラー:", err);
     });
 }
+
+
+
+// =================================================
+// Google Analytics (GA4) の設定
+// =================================================
+
+// ★ここにあなたの測定IDを入れてください
+const GA_MEASUREMENT_ID = "G-5QY0YY3Q67"; 
+
+(function() {
+    // 1. Googleのスクリプトを読み込むタグを作る
+    const script = document.createElement('script');
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    script.async = true;
+    document.head.appendChild(script);
+
+    // 2. GAの設定を開始する
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', GA_MEASUREMENT_ID);
+    
+    console.log("Google Analytics を開始しました: " + GA_MEASUREMENT_ID);
+})();
