@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脳トレ！光の順番おぼえ</title>
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            text-align: center;
+            background-color: #263238; /* 背景は暗くして光を目立たせる */
+            color: white;
+            user-select: none;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { color: #eceff1; margin-bottom: 10px; font-size: 24px; }
+
+        /* ステータス表示 */
+        .status-bar {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #80cbc4;
+        }
+
+        /* ゲーム盤（2x2のグリッド） */
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        /* 色ボタンのデザイン */
+        .color-btn {
+            height: 130px;
+            border-radius: 20px;
+            cursor: pointer;
+            opacity: 0.6; /* 通常時は少し暗く */
+            transition: all 0.2s;
+            border: 4px solid rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        /* 各色の設定 */
+        #btn-0 { background-color: #e53935; } /* 赤 */
+        #btn-1 { background-color: #1e88e5; } /* 青 */
+        #btn-2 { background-color: #43a047; } /* 緑 */
+        #btn-3 { background-color: #fdd835; } /* 黄 */
+
+        /* 光った時、押した時の見た目 */
+        .color-btn.active {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255,255,255,0.8); /* 白く光らせる */
+            border-color: white;
+        }
+
+        /* スタートボタン */
+        #start-btn {
+            font-size: 22px;
+            padding: 12px 50px;
+            background-color: #009688;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px #004d40;
+            margin-top: 30px;
+        }
+        #start-btn:active { transform: translateY(2px); box-shadow: 0 2px #004d40; }
+        #start-btn:disabled { background-color: #546e7a; box-shadow: none; cursor: not-allowed; }
+
+        /* --- 結果発表画面 --- */
+        #result-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); z-index: 999;
+            justify-content: center; align-items: center; color: #333;
+        }
+        .result-box {
+            background-color: white; padding: 25px; width: 85%; max-width: 350px;
+            border-radius: 15px; text-align: center;
+        }
+        .result-score { font-size: 36px; color: #d32f2f; font-weight: bold; margin: 10px 0; }
+        .ranking-title { font-size: 18px; color: #e65100; margin-top: 15px; border-bottom: 2px solid #ffcc80; display: inline-block; }
+        ul { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
+        li { padding: 6px 10px; border-bottom: 1px dotted #ccc; font-size: 16px; }
+        li.rank-1 { color: #d84315; font-weight: bold; background-color: #fff3e0; }
+        #retry-btn {
+            background-color: #0288d1; color: white; font-size: 18px; padding: 10px 30px;
+            border: none; border-radius: 30px; margin-top: 15px; cursor: pointer; width: 80%;
+        }
+        #reset-storage {
+            font-size: 12px; color: #999; margin-top: 15px; background: none; border: none; text-decoration: underline; cursor: pointer;
+        }
+        /* ゲーム中のメッセージ表示 */
+        #message-area { height: 30px; color: #ffeb3b; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>💡 光の順番おぼえ</h1>
+    <div class="status-bar">レベル: <span id="level">1</span></div>
+    <div id="message-area">スタートボタンを押してね</div>
+
+    <div class="game-grid">
+        <div class="color-btn" id="btn-0"></div>
+        <div class="color-btn" id="btn-1"></div>
+        <div class="color-btn" id="btn-2"></div>
+        <div class="color-btn" id="btn-3"></div>
+    </div>
+
+    <button id="start-btn">スタート！</button>
+
+    <div id="result-overlay">
+        <div class="result-box">
+            <h2>残念、まちがい！</h2>
+            <div>到達レベル</div>
+            <div class="result-score" id="final-score">レベル 1</div>
+            
+            <div class="ranking-title">🏆 最高レベルランキング 🏆</div>
+            <ul id="overlay-ranking-list"></ul>
+
+            <button id="retry-btn">もう一回挑戦</button>
+            <br>
+            <button id="reset-storage">ランキングを消去</button>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const levelDisplay = document.getElementById('level');
+            const messageArea = document.getElementById('message-area');
+            const startBtn = document.getElementById('start-btn');
+            const buttons = [
+                document.getElementById('btn-0'),
+                document.getElementById('btn-1'),
+                document.getElementById('btn-2'),
+                document.getElementById('btn-3')
+            ];
+            
+            // 結果画面用
+            const resultOverlay = document.getElementById('result-overlay');
+            const finalScoreDisplay = document.getElementById('final-score');
+            const rankingList = document.getElementById('overlay-ranking-list');
+            const retryBtn = document.getElementById('retry-btn');
+            const resetBtn = document.getElementById('reset-storage');
+
+            let gameSequence = []; // コンピュータの順番
+            let playerSequence = []; // プレイヤーの入力
+            let level = 1;
+            let isComputerTurn = false; // コンピュータが光らせている最中か
+            let isGameActive = false;
+
+            const STORAGE_KEY = 'light_memory_ranking_v1';
+
+            // ゲーム開始
+            function startGame() {
+                startBtn.disabled = true;
+                level = 1;
+                gameSequence = [];
+                levelDisplay.textContent = level;
+                isGameActive = true;
+                nextRound();
+            }
+
+            // 次のラウンドの準備
+            function nextRound() {
+                playerSequence = [];
+                levelDisplay.textContent = level;
+                messageArea.textContent = "よく見ててね...";
+                isComputerTurn = true;
+
+                // 新しい色を1つ追加（0〜3のランダムな数字）
+                gameSequence.push(Math.floor(Math.random() * 4));
+
+                // 順番に光らせる
+                let delay = 800; // 最初の待ち時間
+                gameSequence.forEach((colorIndex, i) => {
+                    setTimeout(() => {
+                        flashButton(colorIndex);
+                    }, delay);
+                    // 次の光るまでの間隔（シニア向けにゆっくりめ: 1秒間隔）
+                    delay += 1000; 
+                });
+
+                // 全部の光り終わった後の処理
+                setTimeout(() => {
+                    messageArea.textContent = "あなたの番！同じ順番で押して！";
+                    isComputerTurn = false;
+                }, delay);
+            }
+
+            // ボタンをピカッとさせる
+            function flashButton(index) {
+                const btn = buttons[index];
+                btn.classList.add('active');
+                // 0.5秒後に元に戻す
+                setTimeout(() => {
+                    btn.classList.remove('active');
+                }, 500);
+            }
+
+            // プレイヤーがボタンを押した時の処理
+            function handlePlayerClick(index) {
+                // ゲーム中じゃない、またはコンピュータのターン中は押せない
+                if (!isGameActive || isComputerTurn) return;
+
+                // 押したボタンを光らせる
+                flashButton(index);
+                // プレイヤーの入力を記録
+                playerSequence.push(index);
+
+                // 入力が合っているかチェック
+                const currentStep = playerSequence.length - 1;
+                if (playerSequence[currentStep] !== gameSequence[currentStep]) {
+                    gameOver();
+                    return;
+                }
+
+                // 最後まで正解したか？
+                if (playerSequence.length === gameSequence.length) {
+                    level++;
+                    isComputerTurn = true; // 次が始まるまで操作ロック
+                    messageArea.textContent = "正解！次のレベルへ！";
+                    setTimeout(nextRound, 1500); // 少し待って次のラウンドへ
+                }
+            }
+
+            // ゲームオーバー処理
+            function gameOver() {
+                isGameActive = false;
+                messageArea.textContent = "";
+                // 少し待ってから結果画面へ
+                setTimeout(() => {
+                    finalScoreDisplay.textContent = "レベル " + level;
+                    saveAndShowRanking(level);
+                    resultOverlay.style.display = "flex";
+                }, 800);
+            }
+
+            // --- ランキング処理 (レベルが高い順) ---
+            function saveAndShowRanking(newScore) {
+                let scores = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+                scores.push(newScore);
+                scores.sort((a, b) => b - a); // 大きい順
+                scores = scores.slice(0, 5);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+
+                let html = "";
+                if (scores.length === 0) html = "<li>記録なし</li>";
+                else {
+                    scores.forEach((s, i) => {
+                        let rankClass = i === 0 ? 'class="rank-1"' : '';
+                        let icon = i === 0 ? '👑' : (i + 1) + '位';
+                        html += `<li ${rankClass}>${icon} : レベル ${s}</li>`;
+                    });
+                }
+                rankingList.innerHTML = html;
+            }
+
+            // イベント設定
+            buttons.forEach((btn, index) => {
+                btn.addEventListener('click', () => handlePlayerClick(index));
+            });
+
+            startBtn.addEventListener('click', startGame);
+            
+            retryBtn.addEventListener('click', () => {
+                resultOverlay.style.display = "none";
+                startBtn.disabled = false;
+                levelDisplay.textContent = "1";
+                messageArea.textContent = "スタートボタンを押してね";
+            });
+            resetBtn.addEventListener('click', () => {
+                if(confirm("ランキングを消去しますか？")) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    alert("削除しました。");
+                    resultOverlay.style.display = "none";
+                    startBtn.disabled = false;
+                }
+            });
+        };
+    </script>
+</body>
+</html>

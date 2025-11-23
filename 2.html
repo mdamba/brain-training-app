@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脳トレ！絵合わせゲーム（記録機能付）</title>
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            text-align: center;
+            background-color: #fff9c4;
+            user-select: none;
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 50px;
+        }
+
+        h1 { color: #f57f17; margin-bottom: 10px; font-size: 24px; }
+
+        /* ステータス表示 */
+        .status-bar { margin: 15px 0; font-size: 20px; font-weight: bold; color: #333; }
+
+        /* リセットボタン */
+        #restart-btn {
+            font-size: 20px; padding: 10px 30px; background-color: #4caf50; color: white;
+            border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px #2e7d32; margin-bottom: 20px;
+        }
+        #restart-btn:active { transform: translateY(2px); box-shadow: 0 2px #2e7d32; }
+
+        /* ゲーム盤 */
+        .game-grid {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+            max-width: 360px; margin: 0 auto;
+        }
+
+        /* カードのデザイン */
+        .card {
+            width: 70px; height: 90px; background-color: #ffcc80; border-radius: 8px;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            font-size: 40px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); border: 2px solid #ef6c00;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card.flipped { background-color: #ffffff; cursor: default; border-color: #ccc; }
+        .card.matched { background-color: #b2dfdb; opacity: 0.6; }
+        .card-content { display: none; }
+        .card.flipped .card-content { display: block; }
+
+        /* --- 結果発表画面（共通デザイン） --- */
+        #result-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); z-index: 999;
+            justify-content: center; align-items: center;
+        }
+        .result-box {
+            background-color: white; padding: 20px; width: 85%; max-width: 400px;
+            border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center;
+        }
+        .result-score { font-size: 32px; color: #d32f2f; font-weight: bold; margin: 10px 0; }
+        .ranking-title { font-size: 18px; color: #e65100; margin-top: 20px; border-bottom: 2px solid #ffcc80; display: inline-block; }
+        ul { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
+        li { padding: 8px 10px; border-bottom: 1px dotted #ccc; font-size: 18px; }
+        li.rank-1 { color: #d84315; font-weight: bold; font-size: 22px; background-color: #fff3e0; border-radius: 5px; }
+        
+        #retry-btn { background-color: #2196F3; box-shadow: 0 4px #0D47A1; margin-top: 20px; width: 80%; padding: 10px; border: none; border-radius: 30px; color: white; font-size: 18px; cursor: pointer; }
+        #reset-storage { font-size: 12px; color: #999; margin-top: 20px; background: none; border: none; text-decoration: underline; padding: 0; box-shadow: none; cursor: pointer;}
+        
+        /* 戻るボタン */
+        .back-link { display: block; margin-top: 20px; color: #666; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <h1>🍎 脳トレ！絵合わせ 🍇</h1>
+    
+    <div class="status-bar">
+        手数: <span id="move-count">0</span> 回
+    </div>
+
+    <button id="restart-btn">最初から遊ぶ</button>
+
+    <div class="game-grid" id="game-board"></div>
+
+    <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+
+    <div id="result-overlay">
+        <div class="result-box">
+            <h2>クリア！</h2>
+            <div>かかった手数</div>
+            <div class="result-score" id="final-score">0回</div>
+            <div id="sending-msg" style="font-size:12px; color:blue;">記録中...</div>
+            
+            <div class="ranking-title">🏆 少ない手数ランキング 🏆</div>
+            <ul id="overlay-ranking-list"></ul>
+
+            <button id="retry-btn">もう一回遊ぶ</button>
+            <br>
+            <button id="reset-storage">ランキングを消去</button>
+            <br>
+            <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+
+    <script>
+        window.onload = function() {
+            const gameBoard = document.getElementById('game-board');
+            const moveDisplay = document.getElementById('move-count');
+            const restartBtn = document.getElementById('restart-btn');
+            
+            // 結果画面用
+            const resultOverlay = document.getElementById('result-overlay');
+            const finalScoreDisplay = document.getElementById('final-score');
+            const overlayRankingList = document.getElementById('overlay-ranking-list');
+            const retryBtn = document.getElementById('retry-btn');
+            const resetStorageBtn = document.getElementById('reset-storage');
+            const sendingMsg = document.getElementById('sending-msg');
+
+            const emojis = ['🍎', '🍎', '🍌', '🍌', '🍇', '🍇', '🍓', '🍓', '🍒', '🍒', '🍑', '🍑', '🍍', '🍍', '🍈', '🍈'];
+            let flippedCards = [];
+            let matchedCount = 0;
+            let moves = 0;
+            let lockBoard = false;
+
+            const STORAGE_KEY = 'memory_ranking_v1';
+
+            // --- 記録・ランキング機能 ---
+            function saveScore(newScore) {
+                // 1. Googleスプレッドシートへ送信
+                if (typeof sendData === 'function') {
+                    sendingMsg.textContent = "記録中...";
+                    sendData("絵合わせ", newScore); // "絵合わせ" という名前で送信
+                    setTimeout(() => { sendingMsg.textContent = "✅ 記録完了"; }, 1000);
+                }
+
+                // 2. ローカルランキング保存
+                let saved = localStorage.getItem(STORAGE_KEY);
+                let scores = saved ? JSON.parse(saved) : [];
+                scores.push(newScore);
+                
+                // ★重要：手数は「少ない方が偉い」ので、小さい順（a - b）に並べ替える
+                scores.sort((a, b) => a - b);
+                
+                scores = scores.slice(0, 5);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+                return scores;
+            }
+
+            // ゲーム初期化
+            function initGame() {
+                gameBoard.innerHTML = '';
+                flippedCards = [];
+                matchedCount = 0;
+                moves = 0;
+                moveDisplay.textContent = moves;
+                lockBoard = false;
+                resultOverlay.style.display = "none";
+
+                const shuffled = emojis.slice().sort(() => Math.random() - 0.5);
+
+                shuffled.forEach(emoji => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `<span class="card-content">${emoji}</span>`;
+                    card.addEventListener('click', function() { flipCard(card); });
+                    gameBoard.appendChild(card);
+                });
+            }
+
+            // カードめくり処理
+            function flipCard(card) {
+                if (lockBoard) return;
+                if (card.classList.contains('flipped')) return;
+
+                card.classList.add('flipped');
+                flippedCards.push(card);
+
+                if (flippedCards.length === 2) {
+                    moves++;
+                    moveDisplay.textContent = moves;
+                    checkForMatch();
+                }
+            }
+
+            // 判定処理
+            function checkForMatch() {
+                lockBoard = true;
+                const card1 = flippedCards[0];
+                const card2 = flippedCards[1];
+                const char1 = card1.querySelector('.card-content').textContent;
+                const char2 = card2.querySelector('.card-content').textContent;
+
+                if (char1 === char2) {
+                    // 正解
+                    setTimeout(() => {
+                        card1.classList.add('matched');
+                        card2.classList.add('matched');
+                        flippedCards = [];
+                        lockBoard = false;
+                        matchedCount++;
+                        
+                        // クリア！
+                        if (matchedCount === emojis.length / 2) {
+                            endGame();
+                        }
+                    }, 500);
+                } else {
+                    // 不正解
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        flippedCards = [];
+                        lockBoard = false;
+                    }, 1000);
+                }
+            }
+
+            // ゲーム終了時の処理
+            function endGame() {
+                // スコア保存
+                const currentRanking = saveScore(moves);
+
+                finalScoreDisplay.textContent = moves + " 回";
+
+                // ランキング表示
+                let html = "";
+                if (currentRanking.length === 0) {
+                    html = "<li>記録なし</li>";
+                } else {
+                    currentRanking.forEach((s, index) => {
+                        let rankClass = index === 0 ? 'class="rank-1"' : '';
+                        let icon = index === 0 ? '👑' : (index + 1) + '位';
+                        html += `<li ${rankClass}>${icon} : ${s} 回</li>`;
+                    });
+                }
+                overlayRankingList.innerHTML = html;
+                resultOverlay.style.display = "flex";
+            }
+
+            restartBtn.addEventListener('click', initGame);
+            retryBtn.addEventListener('click', initGame);
+
+            resetStorageBtn.addEventListener('click', () => {
+                if(confirm("ランキングを全て消しますか？")) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    alert("削除しました。");
+                    resultOverlay.style.display = "none";
+                    initGame();
+                }
+            });
+
+            initGame();
+        };
+    </script>
+</body>
+</html>

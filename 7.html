@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脳トレ！仲間はずれ探し（記録機能付）</title>
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            text-align: center;
+            background-color: #f3e5f5; /* 薄い紫 */
+            user-select: none;
+            margin: 0;
+            padding: 10px;
+            padding-bottom: 50px;
+        }
+
+        h1 { color: #8e24aa; margin: 10px 0; font-size: 24px; }
+
+        /* ステータスバー */
+        .status-board {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .score-box { color: #d32f2f; }
+        .time-box { color: #1976d2; }
+
+        /* ゲーム盤 */
+        #game-grid {
+            display: grid;
+            gap: 5px;
+            margin: 0 auto;
+            justify-content: center;
+            max-width: 360px; /* スマホ幅 */
+        }
+
+        /* パネル（ボタン） */
+        .panel {
+            background-color: white;
+            border: 2px solid #ce93d8;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px; /* 絵文字サイズ */
+            aspect-ratio: 1 / 1; /* 正方形 */
+            transition: transform 0.1s;
+            box-shadow: 0 4px #ba68c8;
+        }
+        
+        .panel:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px #ba68c8;
+        }
+
+        /* 不正解の時の揺れ */
+        .shake {
+            animation: shake 0.3s;
+            background-color: #cfcfcf !important;
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* スタートボタン */
+        #start-btn {
+            font-size: 24px;
+            padding: 12px 60px;
+            background-color: #ab47bc;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px #7b1fa2;
+            margin-top: 20px;
+        }
+        #start-btn:active { transform: translateY(2px); box-shadow: 0 2px #7b1fa2; }
+
+        /* --- 結果画面 --- */
+        #result-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); z-index: 999;
+            justify-content: center; align-items: center;
+        }
+        .result-box {
+            background-color: white; padding: 25px; width: 85%; max-width: 350px;
+            border-radius: 15px; text-align: center;
+        }
+        .result-score { font-size: 40px; color: #d32f2f; font-weight: bold; margin: 10px 0; }
+        .ranking-title { font-size: 18px; color: #e65100; margin-top: 15px; border-bottom: 2px solid #ffcc80; display: inline-block; }
+        ul { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
+        li { padding: 6px 10px; border-bottom: 1px dotted #ccc; font-size: 16px; }
+        li.rank-1 { color: #d84315; font-weight: bold; background-color: #fff3e0; }
+        
+        #retry-btn {
+            background-color: #42a5f5; color: white; font-size: 18px; padding: 10px 30px;
+            border: none; border-radius: 30px; margin-top: 15px; cursor: pointer; width: 80%;
+        }
+        #reset-storage {
+            font-size: 12px; color: #999; margin-top: 15px; background: none; border: none; text-decoration: underline; cursor: pointer;
+        }
+
+        /* 戻るボタン */
+        .back-link { display: block; margin-top: 20px; color: #666; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <h1>👀 仲間はずれ探し</h1>
+    <div class="status-board">
+        <div class="score-box">正解数: <span id="score">0</span></div>
+        <div class="time-box">残り: <span id="timer">60</span>秒</div>
+    </div>
+
+    <button id="start-btn">スタート！</button>
+
+    <div id="game-grid">
+        </div>
+
+    <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+
+    <div id="result-overlay">
+        <div class="result-box">
+            <h2>時間切れ！</h2>
+            <div>見つけた数</div>
+            <div class="result-score" id="final-score">0個</div>
+            <div id="sending-msg" style="font-size:12px; color:blue;">記録中...</div>
+            
+            <div class="ranking-title">🏆 観察力ランキング 🏆</div>
+            <ul id="overlay-ranking-list"></ul>
+
+            <button id="retry-btn">もう一回挑戦</button>
+            <br>
+            <button id="reset-storage">ランキングを消去</button>
+            <br>
+            <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+
+    <script>
+        window.onload = function() {
+            const grid = document.getElementById('game-grid');
+            const scoreDisplay = document.getElementById('score');
+            const timerDisplay = document.getElementById('timer');
+            const startBtn = document.getElementById('start-btn');
+            
+            // 結果画面用
+            const resultOverlay = document.getElementById('result-overlay');
+            const finalScoreDisplay = document.getElementById('final-score');
+            const rankingList = document.getElementById('overlay-ranking-list');
+            const retryBtn = document.getElementById('retry-btn');
+            const resetBtn = document.getElementById('reset-storage');
+            const sendingMsg = document.getElementById('sending-msg');
+
+            let score = 0;
+            let timeLeft = 60;
+            let timerInterval;
+            let isPlaying = false;
+            let currentLevel = 2; // グリッドのサイズ（2x2から開始）
+
+            const STORAGE_KEY = 'odd_one_ranking_v1';
+
+            // 問題データ（[通常, 仲間はずれ] のペア）
+            const pairs = [
+                ['🐱', '🐯'], ['🐶', '🐺'], ['🍎', '🍅'], ['⚽️', '🏀'],
+                ['🚗', '🚕'], ['😀', '😃'], ['🌙', '🌜'], ['⌚️', '⏰'],
+                ['👓', '🕶'], ['🍦', '🍧'], ['🌲', '🌳'], ['🏠', '🏡'],
+                ['🚄', '🚅'], ['✏️', '✒️'], ['🔔', '🔕'], ['🔒', '🔓']
+            ];
+
+            function startGame() {
+                score = 0;
+                timeLeft = 60;
+                currentLevel = 2; // 最初は2x2
+                scoreDisplay.textContent = 0;
+                timerDisplay.textContent = 60;
+                startBtn.style.display = 'none';
+                isPlaying = true;
+
+                generateLevel();
+
+                // タイマー
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            }
+
+            function generateLevel() {
+                grid.innerHTML = "";
+
+                // グリッドサイズ決定（最大5x5まで）
+                // スコアに応じて難易度アップ
+                if (score >= 3) currentLevel = 3;
+                if (score >= 8) currentLevel = 4;
+                if (score >= 15) currentLevel = 5;
+
+                // スマホで見やすいようにサイズ調整
+                grid.style.gridTemplateColumns = `repeat(${currentLevel}, 1fr)`;
+                
+                const totalCells = currentLevel * currentLevel;
+                
+                // ペアをランダムに選ぶ
+                const pair = pairs[Math.floor(Math.random() * pairs.length)];
+                const normalChar = pair[0];
+                const oddChar = pair[1];
+
+                // 仲間はずれの場所を決める
+                const oddIndex = Math.floor(Math.random() * totalCells);
+
+                // パネル生成
+                for (let i = 0; i < totalCells; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'panel';
+                    
+                    if (i === oddIndex) {
+                        div.textContent = oddChar; // 正解
+                        div.onclick = () => handleCorrect();
+                    } else {
+                        div.textContent = normalChar; // 間違い
+                        div.onclick = (e) => handleWrong(e.target);
+                    }
+
+                    // 文字サイズ調整（数が増えると小さくする）
+                    if (currentLevel >= 5) div.style.fontSize = "28px";
+                    else div.style.fontSize = "40px";
+
+                    grid.appendChild(div);
+                }
+            }
+
+            function handleCorrect() {
+                if (!isPlaying) return;
+                score++;
+                scoreDisplay.textContent = score;
+                generateLevel(); // 次の問題へ
+            }
+
+            function handleWrong(element) {
+                if (!isPlaying) return;
+                // 間違えたら揺らす
+                element.classList.add('shake');
+                setTimeout(() => {
+                    element.classList.remove('shake');
+                }, 300);
+            }
+
+            function endGame() {
+                clearInterval(timerInterval);
+                isPlaying = false;
+                finalScoreDisplay.textContent = score + "個";
+                saveAndShowRanking(score);
+                resultOverlay.style.display = "flex";
+            }
+
+            // ランキング＆記録処理
+            function saveAndShowRanking(newScore) {
+                // 1. Googleスプレッドシートへ送信
+                if (typeof sendData === 'function') {
+                    sendingMsg.textContent = "記録中...";
+                    sendData("仲間はずれ", newScore);
+                    setTimeout(() => { sendingMsg.textContent = "✅ 記録完了"; }, 1000);
+                }
+
+                // 2. ローカル保存
+                let scores = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+                scores.push(newScore);
+                scores.sort((a, b) => b - a); // 多い順
+                scores = scores.slice(0, 5);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+
+                let html = "";
+                if (scores.length === 0) html = "<li>記録なし</li>";
+                else {
+                    scores.forEach((s, i) => {
+                        let rankClass = i === 0 ? 'class="rank-1"' : '';
+                        let icon = i === 0 ? '👑' : (i + 1) + '位';
+                        html += `<li ${rankClass}>${icon} : ${s} 個</li>`;
+                    });
+                }
+                rankingList.innerHTML = html;
+            }
+
+            startBtn.addEventListener('click', startGame);
+            retryBtn.addEventListener('click', () => {
+                resultOverlay.style.display = "none";
+                grid.innerHTML = "";
+                startBtn.style.display = "inline-block";
+                scoreDisplay.textContent = 0;
+                timerDisplay.textContent = 60;
+            });
+            resetBtn.addEventListener('click', () => {
+                if(confirm("ランキングを消去しますか？")) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    alert("削除しました。");
+                    resultOverlay.style.display = "none";
+                    startBtn.style.display = "inline-block";
+                }
+            });
+        };
+    </script>
+</body>
+</html>

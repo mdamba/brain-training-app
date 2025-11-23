@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直感！ならべかえパズル（記録機能付）</title>
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            text-align: center;
+            background-color: #fffde7; /* 薄い黄色 */
+            user-select: none;
+            margin: 0;
+            padding: 10px;
+            padding-bottom: 50px;
+        }
+
+        h1 { color: #fbc02d; margin: 10px 0; font-size: 22px; text-shadow: 1px 1px 0 #fff; }
+        p { font-size: 16px; color: #555; margin: 5px; }
+
+        /* ステータス表示 */
+        .status-board {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+        }
+
+        /* パズルの枠（3x3） */
+        #puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 300px; /* スマホに収まるサイズ */
+            margin: 0 auto;
+            background-color: #ccc;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        /* ピースのデザイン */
+        .piece {
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: rgba(255,255,255, 0.9);
+            text-shadow: 0 2px 2px rgba(0,0,0,0.2);
+            cursor: pointer;
+            border-radius: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* 選択中のピース */
+        .piece.selected {
+            transform: scale(0.9);
+            box-shadow: 0 0 0 4px #333 inset; /* 内側に黒い枠 */
+            z-index: 10;
+        }
+
+        /* 完成時のアニメーション */
+        .piece.solved {
+            border: none;
+        }
+
+        /* スタートボタン */
+        #start-btn {
+            font-size: 22px;
+            padding: 12px 50px;
+            background-color: #8bc34a;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px #558b2f;
+            margin-top: 25px;
+        }
+        #start-btn:active { transform: translateY(2px); box-shadow: 0 2px #558b2f; }
+
+        /* --- 結果発表画面 --- */
+        #result-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .result-box {
+            background-color: white;
+            padding: 25px;
+            width: 85%;
+            max-width: 350px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .result-time { font-size: 36px; color: #fbc02d; font-weight: bold; margin: 10px 0; }
+        
+        /* ランキングリスト */
+        .ranking-title { font-size: 18px; color: #e65100; margin-top: 15px; border-bottom: 2px solid #ffe082; display: inline-block; }
+        ul { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
+        li { padding: 6px 10px; border-bottom: 1px dotted #ccc; font-size: 16px; }
+        li.rank-1 { color: #d84315; font-weight: bold; background-color: #fff3e0; }
+
+        #retry-btn {
+            background-color: #03a9f4; color: white; font-size: 18px; padding: 10px 30px;
+            border: none; border-radius: 30px; margin-top: 15px; cursor: pointer; width: 80%;
+        }
+        #reset-storage {
+            font-size: 12px; color: #999; margin-top: 15px; background: none; border: none; text-decoration: underline; cursor: pointer;
+        }
+        
+        /* 戻るボタン */
+        .back-link { display: block; margin-top: 20px; color: #666; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <h1>🌈 色並べパズル</h1>
+    <p>1から9まで順番に並べてね</p>
+
+    <div class="status-board">
+        ⏱ タイム: <span id="timer">0.0</span> 秒
+    </div>
+
+    <div id="puzzle-container">
+        </div>
+
+    <button id="start-btn">スタート！</button>
+
+    <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+
+    <div id="result-overlay">
+        <div class="result-box">
+            <h2>🌈 完成！ 🌈</h2>
+            <div>かかった時間</div>
+            <div class="result-time" id="final-time">0.0秒</div>
+            <div id="sending-msg" style="font-size:12px; color:blue;">記録中...</div>
+            
+            <div class="ranking-title">🏆 早並べランキング 🏆</div>
+            <ul id="overlay-ranking-list"></ul>
+
+            <button id="retry-btn">もう一回遊ぶ</button>
+            <br>
+            <button id="reset-storage">ランキングを消去</button>
+            <br>
+            <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+
+    <script>
+        window.onload = function() {
+            const container = document.getElementById('puzzle-container');
+            const timerDisplay = document.getElementById('timer');
+            const startBtn = document.getElementById('start-btn');
+            
+            // 結果画面用
+            const resultOverlay = document.getElementById('result-overlay');
+            const finalTimeDisplay = document.getElementById('final-time');
+            const rankingList = document.getElementById('overlay-ranking-list');
+            const retryBtn = document.getElementById('retry-btn');
+            const resetBtn = document.getElementById('reset-storage');
+            const sendingMsg = document.getElementById('sending-msg');
+
+            let pieces = []; // 今の並び順（数字の配列）
+            let selectedIndex = null; // 最初にタッチした場所
+            let isPlaying = false;
+            let startTime;
+            let timerInterval;
+            
+            const STORAGE_KEY = 'puzzle_ranking_v1';
+
+            // 色のリスト（1〜9に対応するグラデーション色）
+            const colors = [
+                "#ef5350", "#ff7043", "#ffca28", "#d4e157", "#66bb6a", "#26a69a", "#42a5f5", "#5c6bc0", "#ab47bc"
+            ];
+
+            // 初期表示（整列した状態で見せる）
+            renderPuzzle([1,2,3,4,5,6,7,8,9], false);
+
+            // ゲーム開始
+            function startGame() {
+                startBtn.style.display = "none";
+                isPlaying = true;
+                selectedIndex = null;
+                timerDisplay.textContent = "0.0";
+                
+                pieces = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                do {
+                    pieces.sort(() => Math.random() - 0.5);
+                } while (checkWin(pieces)); // 最初から揃っていたらやり直し
+
+                renderPuzzle(pieces, true);
+
+                // タイマー開始
+                startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    timerDisplay.textContent = ((now - startTime) / 1000).toFixed(1);
+                }, 100);
+            }
+
+            // パズルを描画する関数
+            function renderPuzzle(arr, clickable) {
+                container.innerHTML = "";
+                arr.forEach((num, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'piece';
+                    div.textContent = num;

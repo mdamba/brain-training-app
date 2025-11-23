@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>毎日脳トレ・プロジェクト</title>
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            padding-bottom: 60px;
+        }
+
+        /* ヘッダーエリア */
+        header {
+            background: linear-gradient(135deg, #42a5f5, #1976d2);
+            color: white;
+            padding: 20px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        h1 { margin: 0; font-size: 24px; }
+        .user-greeting { font-size: 16px; margin-top: 5px; font-weight: bold; }
+        .date-display { font-size: 12px; margin-top: 2px; opacity: 0.8; }
+
+        /* 名前の変更ボタン（小さく） */
+        #change-name-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        /* 今日の状態（ステータス）エリア */
+        .status-card {
+            background-color: white;
+            width: 90%;
+            max-width: 500px;
+            margin: -20px auto 20px auto;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .status-title { font-size: 16px; font-weight: bold; color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .status-message { font-size: 18px; font-weight: bold; color: #d32f2f; text-align: center; margin-bottom: 20px; }
+
+        /* パラメータバー（グラフ） */
+        .param-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; }
+        .param-label { width: 80px; font-weight: bold; }
+        .bar-bg { flex: 1; height: 12px; background-color: #eee; border-radius: 6px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 6px; width: 0%; transition: width 1s; }
+        
+        .color-reflex { background-color: #ef5350; } /* 反射神経: 赤 */
+        .color-memory { background-color: #42a5f5; } /* 記憶力: 青 */
+        .color-brain { background-color: #66bb6a; }  /* 思考力: 緑 */
+        .color-obs { background-color: #ab47bc; }     /* 観察力: 紫 */
+
+        /* ゲームリスト */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            padding: 0 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+        .game-card:active { transform: scale(0.98); background-color: #fafafa; }
+
+        .icon { font-size: 36px; margin-bottom: 5px; }
+        .title { font-size: 15px; font-weight: bold; }
+        
+        .best-score {
+            margin-top: 8px;
+            font-size: 12px;
+            background-color: #f0f0f0;
+            padding: 3px 8px;
+            border-radius: 10px;
+            color: #555;
+        }
+        .best-score span { font-weight: bold; color: #e65100; }
+
+        .badge {
+            font-size: 10px; color: white; padding: 2px 6px; border-radius: 4px; margin-top: 5px;
+        }
+        
+        .game-no {
+            position: absolute; top: 10px; left: 10px;
+            font-size: 12px; color: #ccc; font-weight: bold;
+        }
+        .game-card { position: relative; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🧠 脳の健康診断</h1>
+        <div class="user-greeting">ようこそ、<span id="header-name">ゲスト</span>さん</div>
+        <div class="date-display" id="today-date">202X年X月X日</div>
+        <button id="change-name-btn" onclick="askName(true)">名前を変更する</button>
+    </header>
+
+    <div class="status-card">
+        <div class="status-title">今日のあなたの状態</div>
+        <div class="status-message" id="daily-msg">データ収集中...</div>
+        
+        <div class="param-row">
+            <div class="param-label">反射神経</div>
+            <div class="bar-bg"><div class="bar-fill color-reflex" id="bar-reflex"></div></div>
+        </div>
+        <div class="param-row">
+            <div class="param-label">記憶力</div>
+            <div class="bar-bg"><div class="bar-fill color-memory" id="bar-memory"></div></div>
+        </div>
+        <div class="param-row">
+            <div class="param-label">思考力</div>
+            <div class="bar-bg"><div class="bar-fill color-brain" id="bar-brain"></div></div>
+        </div>
+        <div class="param-row">
+            <div class="param-label">観察力</div>
+            <div class="bar-bg"><div class="bar-fill color-obs" id="bar-obs"></div></div>
+        </div>
+    </div>
+
+    <h3 style="padding-left: 20px; margin-bottom: 10px; color: #555;">トレーニングを選ぶ</h3>
+    
+    <div class="game-grid">
+        <a href="1.html" class="game-card">
+            <div class="game-no">01</div><div class="icon">🐹</div><div class="title">もぐら叩き</div>
+            <div class="badge color-reflex">反射神経</div><div class="best-score">最高: <span id="score-1">-</span></div>
+        </a>
+        <a href="2.html" class="game-card">
+            <div class="game-no">02</div><div class="icon">🍎</div><div class="title">絵合わせ</div>
+            <div class="badge color-memory">記憶力</div><div class="best-score">最高: <span id="score-2">-</span></div> 
+        </a>
+        <a href="3.html" class="game-card">
+            <div class="game-no">03</div><div class="icon">🔢</div><div class="title">数字タッチ</div>
+            <div class="badge color-reflex">反射神経</div><div class="best-score">最高: <span id="score-3">-</span></div>
+        </a>
+        <a href="4.html" class="game-card">
+            <div class="game-no">04</div><div class="icon">🧮</div><div class="title">計算ドリル</div>
+            <div class="badge color-brain">思考力</div><div class="best-score">最高: <span id="score-4">-</span></div>
+        </a>
+        <a href="5.html" class="game-card">
+            <div class="game-no">05</div><div class="icon">🌈</div><div class="title">色並べパズル</div>
+            <div class="badge color-brain">思考力</div><div class="best-score">最高: <span id="score-5">-</span></div>
+        </a>
+        <a href="6.html" class="game-card">
+            <div class="game-no">06</div><div class="icon">💡</div><div class="title">光の順番</div>
+            <div class="badge color-memory">記憶力</div><div class="best-score">最高: <span id="score-6">-</span></div>
+        </a>
+        <a href="7.html" class="game-card">
+            <div class="game-no">07</div><div class="icon">👀</div><div class="title">仲間はずれ</div>
+            <div class="badge color-obs">観察力</div><div class="best-score">最高: <span id="score-7">-</span></div>
+        </a>
+    </div>
+
+    <script>
+        // ★名前を聞く関数
+        function askName(force = false) {
+            let currentName = localStorage.getItem('user_name');
+            
+            // 名前がまだない、または「強制変更(force)」の場合
+            if (!currentName || force) {
+                let inputName = prompt("あなたのお名前を教えてください", currentName || "");
+                if (inputName && inputName.trim() !== "") {
+                    localStorage.setItem('user_name', inputName);
+                    document.getElementById('header-name').textContent = inputName;
+                }
+            } else {
+                // すでに名前があるならそれを表示
+                document.getElementById('header-name').textContent = currentName;
+            }
+        }
+
+        window.onload = function() {
+            // ★起動時に名前チェック
+            askName();
+
+            // 日付表示
+            const today = new Date();
+            const dateStr = today.getFullYear() + "年" + (today.getMonth()+1) + "月" + today.getDate() + "日";
+            document.getElementById('today-date').textContent = dateStr;
+
+            // --- データの読み込み関数 ---
+            function getBest(key) {
+                const saved = localStorage.getItem(key);
+                if (!saved) return null;
+                const scores = JSON.parse(saved);
+                if (scores.length === 0) return null;
+                return scores[0]; 
+            }
+
+            const s1 = getBest('mogura_ranking_v2');
+            const s2 = getBest('memory_ranking_v1');
+            const s3 = getBest('numbers_ranking_v1');
+            const s4 = getBest('calc_ranking_v1');
+            const s5 = getBest('puzzle_ranking_v1');
+            const s6 = getBest('light_memory_ranking_v1');
+            const s7 = getBest('odd_one_ranking_v1');
+
+            if(s1) document.getElementById('score-1').textContent = s1 + "点";
+            if(s2) document.getElementById('score-2').textContent = s2 + "手";
+            if(s3) document.getElementById('score-3').textContent = s3.toFixed(1) + "秒";
+            if(s4) document.getElementById('score-4').textContent = s4 + "問";
+            if(s5) document.getElementById('score-5').textContent = s5.toFixed(1) + "秒";
+            if(s6) document.getElementById('score-6').textContent = "Lv." + s6;
+            if(s7) document.getElementById('score-7').textContent = s7 + "個";
+
+            // パラメータ計算
+            let p_reflex = 0;
+            if(s1) p_reflex += (s1 / 30) * 50; 
+            if(s3) p_reflex += (Math.max(0, 30 - s3) / 20) * 50;
+            if(p_reflex > 100) p_reflex = 100;
+
+            let p_memory = 0;
+            if(s2) p_memory += (Math.max(0, 40 - s2) / 24) * 50;
+            if(s6) p_memory += (s6 / 10) * 50;
+            if(p_memory > 100) p_memory = 100;
+
+            let p_brain = 0;
+            if(s4) p_brain += (s4 / 15) * 50; 
+            if(s5) p_brain += (Math.max(0, 60 - s5) / 30) * 50;
+            if(p_brain > 100) p_brain = 100;
+
+            let p_obs = 0;
+            if(s7) p_obs += (s7 / 20) * 100;
+            if(p_obs > 100) p_obs = 100;
+
+            setTimeout(() => {
+                document.getElementById('bar-reflex').style.width = Math.max(5, p_reflex) + "%";
+                document.getElementById('bar-memory').style.width = Math.max(5, p_memory) + "%";
+                document.getElementById('bar-brain').style.width = Math.max(5, p_brain) + "%";
+                document.getElementById('bar-obs').style.width = Math.max(5, p_obs) + "%";
+            }, 500);
+
+            const msgEl = document.getElementById('daily-msg');
+            const totalPower = p_reflex + p_memory + p_brain + p_obs;
+
+            if (totalPower === 0) {
+                msgEl.textContent = "さあ、今日のトレーニングを始めましょう！";
+            } else {
+                const stats = [
+                    { name: "反射神経", val: p_reflex },
+                    { name: "記憶力", val: p_memory },
+                    { name: "思考力", val: p_brain },
+                    { name: "観察力", val: p_obs }
+                ];
+                stats.sort((a, b) => b.val - a.val); 
+                const best = stats[0];
+                if (best.val > 80) msgEl.textContent = `すごい！「${best.name}」が若返っています！`;
+                else if (best.val > 40) msgEl.textContent = `順調です。「${best.name}」が良い調子です。`;
+                else msgEl.textContent = `まずは「${best.name}」を伸ばしていきましょう。`;
+            }
+        };
+    </script>
+</body>
+</html>

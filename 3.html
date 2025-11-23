@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脳トレ！数字タッチ（記録機能付）</title>
+    <style>
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            text-align: center;
+            background-color: #e0f7fa;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 50px;
+        }
+
+        h1 { color: #006064; margin: 15px 0 10px 0; font-size: 24px; }
+
+        /* 上部の情報パネル */
+        .info-panel {
+            background-color: white;
+            padding: 10px;
+            margin: 0 auto 10px auto;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .next-box { font-size: 20px; font-weight: bold; color: #d32f2f; }
+        .next-number { font-size: 30px; color: #d32f2f; }
+        .timer-box { font-size: 20px; color: #006064; font-weight: bold; }
+
+        /* スタートボタン */
+        #start-btn {
+            font-size: 22px;
+            padding: 12px 50px;
+            background-color: #ff7043;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px #d84315;
+            margin: 20px auto;
+            display: block;
+        }
+        #start-btn:active { transform: translateY(2px); box-shadow: 0 2px #d84315; }
+
+        /* ゲーム盤（5列x4行） */
+        #game-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 380px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        /* 数字ボタン */
+        .num-btn {
+            background-color: #4dd0e1;
+            color: #006064;
+            font-size: 28px;
+            font-weight: bold;
+            aspect-ratio: 1 / 1;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px #0097a7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.1s;
+        }
+        .num-btn:active { transform: translateY(2px); box-shadow: 0 2px #0097a7; }
+        
+        /* 押した後の見た目 */
+        .num-btn.cleared {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        /* --- 結果発表オーバーレイ --- */
+        #result-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .result-box {
+            background-color: white;
+            padding: 25px;
+            width: 85%;
+            max-width: 400px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            animation: popIn 0.3s ease-out;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .result-time { font-size: 36px; color: #d32f2f; font-weight: bold; margin: 10px 0; }
+        .ranking-title { font-size: 18px; color: #e65100; margin-top: 20px; border-bottom: 2px solid #ffcc80; display: inline-block; }
+        
+        ul { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
+        li { padding: 8px 10px; border-bottom: 1px dotted #ccc; font-size: 18px; }
+        li:last-child { border-bottom: none; }
+        
+        /* 1位を目立たせる */
+        li.rank-1 { color: #d84315; font-weight: bold; font-size: 22px; background-color: #fff3e0; border-radius: 5px; }
+
+        #retry-btn {
+            background-color: #00bcd4;
+            color: white;
+            font-size: 20px;
+            padding: 10px 30px;
+            border: none; border-radius: 30px;
+            box-shadow: 0 4px #00838f;
+            margin-top: 20px;
+            cursor: pointer; width: 80%;
+        }
+        #retry-btn:active { transform: translateY(2px); box-shadow: 0 2px #00838f; }
+
+        #reset-storage {
+            font-size: 12px; color: #999; margin-top: 15px; background: none; border: none; text-decoration: underline; cursor: pointer;
+        }
+
+        /* 戻るボタン */
+        .back-link { display: block; margin-top: 20px; color: #666; text-decoration: none; }
+
+    </style>
+</head>
+<body>
+
+    <h1>👇 1から順に押して！ 👇</h1>
+
+    <div class="info-panel">
+        <div class="next-box">次は: <span id="next-num" class="next-number">-</span></div>
+        <div class="timer-box">時間: <span id="timer">0.0</span>秒</div>
+    </div>
+
+    <button id="start-btn">スタート！</button>
+
+    <div id="game-grid">
+        </div>
+
+    <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+
+    <div id="result-overlay">
+        <div class="result-box">
+            <h2>クリア！</h2>
+            <div>タイム</div>
+            <div class="result-time" id="final-time">0.0秒</div>
+            <div id="sending-msg" style="font-size:12px; color:blue;">記録中...</div>
+            
+            <div class="ranking-title">🏆 スピードランキング 🏆</div>
+            <ul id="overlay-ranking-list">
+                </ul>
+
+            <button id="retry-btn">もう一回遊ぶ</button>
+            <br>
+            <button id="reset-storage">ランキングを消去</button>
+            <br>
+            <a href="index.html" class="back-link">🏠 メニューに戻る</a>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+
+    <script>
+        window.onload = function() {
+            const grid = document.getElementById('game-grid');
+            const nextNumDisplay = document.getElementById('next-num');
+            const timerDisplay = document.getElementById('timer');
+            const startBtn = document.getElementById('start-btn');
+            
+            // オーバーレイ用
+            const resultOverlay = document.getElementById('result-overlay');
+            const finalTimeDisplay = document.getElementById('final-time');
+            const overlayRankingList = document.getElementById('overlay-ranking-list');
+            const retryBtn = document.getElementById('retry-btn');
+            const resetStorageBtn = document.getElementById('reset-storage');
+            const sendingMsg = document.getElementById('sending-msg');
+
+            let currentTarget = 1;
+            let maxNumber = 20; // ここを16や25に変えて難易度調整可能
+            let startTime;
+            let timerInterval;
+            let isPlaying = false;
+            let finalTime = 0;
+
+            // 保存キー
+            const STORAGE_KEY = 'numbers_ranking_v1';
+
+            // --- ゲーム初期化 ---
+            function initGame() {
+                grid.innerHTML = "";
+                resultOverlay.style.display = "none";
+                startBtn.style.display = "none";
+                
+                currentTarget = 1;
+                nextNumDisplay.textContent = currentTarget;
+                timerDisplay.textContent = "0.0";
+                isPlaying = true;
+
+                // 数字配列作成
+                let numbers = [];
+                for (let i = 1; i <= maxNumber; i++) {
+                    numbers.push(i);
+                }
+                // シャッフル
+                numbers.sort(() => Math.random() - 0.5);
+
+                // ボタン配置
+                numbers.forEach(num => {
+                    const btn = document.createElement('div');
+                    btn.classList.add('num-btn');
+                    btn.textContent = num;
+                    btn.dataset.num = num;
+
+                    // タップ時の処理
+                    btn.addEventListener('click', () => {
+                        if (!isPlaying) return;
+                        if (btn.dataset.num == currentTarget) {
+                            correctTap(btn);
+                        }
+                    });
+                    grid.appendChild(btn);
+                });
+
+                // タイマースタート
+                startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    const diff = (now - startTime) / 1000;
+                    timerDisplay.textContent = diff.toFixed(1);
+                }, 100);
+            }
+
+            // 正解時の処理
+            function correctTap(btn) {
+                btn.classList.add('cleared');
+                currentTarget++;
+                if (currentTarget > maxNumber) {
+                    gameClear();
+                } else {
+                    nextNumDisplay.textContent = currentTarget;
+                }
+            }
+
+            // ゲームクリア処理
+            function gameClear() {
+                clearInterval(timerInterval);
+                isPlaying = false;
+                
+                // 正確な最終タイムを計算
+                const now = Date.now();
+                finalTime = ((now - startTime) / 1000).toFixed(1);
+                timerDisplay.textContent = finalTime;
+
+                // ランキング保存と表示
+                showResult(finalTime);
+            }
+
+            // --- ランキング＆記録関連 ---
+            
+            function loadScores() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                return saved ? JSON.parse(saved) : [];
+            }
+
+            function saveScore(newTimeStr) {
+                // 1. Googleスプレッドシートへ送信
+                if (typeof sendData === 'function') {
+                    sendingMsg.textContent = "記録中...";
+                    sendData("数字タッチ", newTimeStr);
+                    setTimeout(() => { sendingMsg.textContent = "✅ 記録完了"; }, 1000);
+                }
+
+                // 2. ローカル保存
+                let scores = loadScores();
+                let newTime = parseFloat(newTimeStr);
+                scores.push(newTime);
+                scores.sort((a, b) => a - b); // 小さい順（速い順）
+                scores = scores.slice(0, 5);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+                return scores;
+            }
+
+            function showResult(timeStr) {
+                finalTimeDisplay.textContent = timeStr + " 秒";
+                
+                // スコア保存実行
+                const ranking = saveScore(timeStr);
+                
+                let html = "";
+                if (ranking.length === 0) {
+                    html = "<li>記録なし</li>";
+                } else {
+                    ranking.forEach((t, index) => {
+                        let rankClass = index === 0 ? 'class="rank-1"' : '';
+                        let icon = index === 0 ? '👑' : (index + 1) + '位';
+                        html += `<li ${rankClass}>${icon} : ${t.toFixed(1)} 秒</li>`;
+                    });
+                }
+                overlayRankingList.innerHTML = html;
+                resultOverlay.style.display = "flex";
+            }
+
+            // イベント設定
+            startBtn.addEventListener('click', initGame);
+            
+            retryBtn.addEventListener('click', () => {
+                resultOverlay.style.display = "none";
+                startBtn.style.display = "block"; // スタートボタンに戻る
+                startBtn.textContent = "スタート！";
+                grid.innerHTML = ""; // 盤面クリア
+                timerDisplay.textContent = "0.0";
+                nextNumDisplay.textContent = "-";
+            });
+
+            resetStorageBtn.addEventListener('click', () => {
+                if(confirm("ランキングを全て消しますか？")) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    alert("削除しました。");
+                    resultOverlay.style.display = "none";
+                    startBtn.style.display = "block";
+                    grid.innerHTML = "";
+                }
+            });
+        };
+    </script>
+</body>
+</html>
