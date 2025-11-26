@@ -219,3 +219,114 @@
                     const div = document.createElement('div');
                     div.className = 'piece';
                     div.textContent = num;
+                    div.style.backgroundColor = colors[num - 1];
+
+                    if (clickable) {
+                        div.onclick = () => handleTap(index);
+                        if (index === selectedIndex) {
+                            div.classList.add('selected');
+                        }
+                    }
+                    container.appendChild(div);
+                });
+            }
+
+            // タップ処理
+            function handleTap(index) {
+                if (!isPlaying) return;
+
+                if (selectedIndex === null) {
+                    selectedIndex = index;
+                    renderPuzzle(pieces, true);
+                } else if (selectedIndex === index) {
+                    selectedIndex = null;
+                    renderPuzzle(pieces, true);
+                } else {
+                    swapPieces(selectedIndex, index);
+                    selectedIndex = null;
+                    
+                    if (checkWin(pieces)) {
+                        renderPuzzle(pieces, false); // 操作不可にする
+                        gameClear();
+                    } else {
+                        renderPuzzle(pieces, true);
+                    }
+                }
+            }
+
+            function swapPieces(idx1, idx2) {
+                const temp = pieces[idx1];
+                pieces[idx1] = pieces[idx2];
+                pieces[idx2] = temp;
+            }
+
+            function checkWin(arr) {
+                for (let i = 0; i < arr.length; i++) {
+                    if (arr[i] !== i + 1) return false;
+                }
+                return true;
+            }
+
+            function gameClear() {
+                clearInterval(timerInterval);
+                isPlaying = false;
+                const finalTime = timerDisplay.textContent;
+                
+                setTimeout(() => {
+                    finalTimeDisplay.textContent = finalTime + " 秒";
+                    saveAndShowRanking(finalTime);
+                    resultOverlay.style.display = "flex";
+                }, 500);
+            }
+
+            // --- ランキング＆記録処理 ---
+            function saveAndShowRanking(timeStr) {
+                // 1. Googleスプレッドシートへ送信
+                if (typeof sendData === 'function') {
+                    sendingMsg.textContent = "記録中...";
+                    sendData("色並べパズル", timeStr);
+                    setTimeout(() => { sendingMsg.textContent = "✅ 記録完了"; }, 1000);
+                }
+
+                // 2. ローカル保存
+                let scores = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+                scores.push(parseFloat(timeStr));
+                scores.sort((a, b) => a - b); // タイムは小さい順
+                scores = scores.slice(0, 5);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+
+                let html = "";
+                if (scores.length === 0) html = "<li>記録なし</li>";
+                else {
+                    scores.forEach((t, i) => {
+                        let rankClass = i === 0 ? 'class="rank-1"' : '';
+                        let icon = i === 0 ? '👑' : (i + 1) + '位';
+                        html += `<li ${rankClass}>${icon} : ${t.toFixed(1)} 秒</li>`;
+                    });
+                }
+                rankingList.innerHTML = html;
+            }
+
+            // ボタンイベント
+            startBtn.addEventListener('click', startGame);
+            
+            retryBtn.addEventListener('click', () => {
+                resultOverlay.style.display = "none";
+                startBtn.style.display = "inline-block";
+                startBtn.textContent = "もう一回遊ぶ";
+                renderPuzzle([1,2,3,4,5,6,7,8,9], false);
+                timerDisplay.textContent = "0.0";
+            });
+
+            resetBtn.addEventListener('click', () => {
+                if(confirm("ランキングを消去しますか？")) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    alert("削除しました。");
+                    resultOverlay.style.display = "none";
+                    startBtn.style.display = "inline-block";
+                }
+            });
+        };
+    </script>
+</body>
+</html>
